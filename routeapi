@@ -1,0 +1,35 @@
+from flask import request, jsonify
+
+@app.route('/users', methods=['GET', 'POST'])
+def handle_users():
+    if request.method == 'POST':
+        if request.is_json:
+            data = request.get_json()
+            new_user = User(first_name=data['first_name'], 
+                            last_name=data['last_name'], 
+                            age=data['age'], 
+                            gender=data['gender'], 
+                            email=data['email'], 
+                            phone=data['phone'], 
+                            birth_date=datetime.strptime(data['birth_date'], '%Y-%m-%d'))
+            db.session.add(new_user)
+            db.session.commit()
+            return {"message": f"user {new_user.first_name} has been created successfully."}
+        else:
+            return {"error": "The request payload is not in JSON format"}
+
+    elif request.method == 'GET':
+        users = User.query.all()
+        results = [
+            {
+                "id": user.id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "age": user.age,
+                "gender": user.gender,
+                "email": user.email,
+                "phone": user.phone,
+                "birth_date": user.birth_date.isoformat() if user.birth_date else None,
+            } for user in users]
+
+        return jsonify(results)
