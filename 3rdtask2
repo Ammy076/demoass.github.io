@@ -1,0 +1,31 @@
+from flask import jsonify, url_for, request
+import requests
+
+@app.route("/api/users", methods=['GET'])
+def get_users_by_name():
+    first_name = request.args.get('first_name', default=None, type=str)
+    if first_name:
+        # Using like for string matching
+        users = User.query.filter(User.first_name.like(f'{first_name}%')).all()
+
+        if users:
+            return jsonify([u.to_json() for u in users])
+        else:
+            response = requests.get(f'https://dummyjson.com/users/search?q={first_name}')
+            if response.status_code == 200:
+                data = response.json()
+                for user in data:
+                    new_user = User(email=user['email'],
+                                    first_name=user['first_name'],
+                                    last_name=user['last_name'],
+                                    age=user['age'],
+                                    gender=user['gender'],
+                                    phone=user['phone'],
+                                    birth_date=datetime.strptime(user['birth_date'], '%Y-%m-%d'))
+                    db.session.add(new_user)
+                db.session.commit()
+                return jsonify([u.to_json() for u in data]), 201
+            else:
+                return jsonify({'message': f'API Request Failed with status code {response.status_code}'}), 500
+    else:
+        return jsonify({'message': 'first_name is required as a parameter'}), 400
