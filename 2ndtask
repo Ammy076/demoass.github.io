@@ -1,0 +1,12 @@
+@app.route('/api/users', methods=['GET'])
+def get_user_by_first_name():
+    first_name = request.args.get('first_name', default=None, type=str)
+    if first_name:
+        user = User.query.filter_by(first_name=first_name).all()
+
+        if user:
+            return jsonify([u.to_json() for u in user]), 200
+        else:
+            return jsonify({'message': 'User not found'}), 404
+    else:
+        return jsonify({'message': 'first_name is required as a parameter'}), 400
